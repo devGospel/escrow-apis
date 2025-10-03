@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from 'next/image'; // Import Image from next/image
 import Header from './Header';
 import Login from './Login';
 import Register from './Register';
@@ -279,9 +280,11 @@ const EshopComponent: React.FC = () => {
                       key={product.id}
                       className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transition duration-300 hover:shadow-xl"
                     >
-                      <img
+                      <Image
                         src={product.image}
                         alt={product.name}
+                        width={400}
+                        height={256}
                         className="w-full h-48 sm:h-64 object-cover"
                       />
                       <div className="p-4 sm:p-6">

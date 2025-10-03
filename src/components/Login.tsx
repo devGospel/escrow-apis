@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -109,7 +110,7 @@ const Login: React.FC<LoginProps> = ({ onClose, onSwitchToRegister, onLoginSucce
           onClick={onSwitchToRegister}
           className="mt-4 text-indigo-600 dark:text-indigo-400 hover:underline text-sm"
         >
-          Don't have an account? Register
+          Don&apos;t have an account? Register
         </button>
         <button
           onClick={onClose}

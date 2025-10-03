@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { API_BASE_URL } from '../contants/api';
 
 interface User {
@@ -9,7 +9,7 @@ interface User {
   email: string;
   phone: string;
   role: string;
-  business_verification?: any;
+  business_verification?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
   is_active: boolean;
@@ -71,11 +71,12 @@ export const useAuth = () => {
       localStorage.setItem('refreshToken', refresh_token);
       localStorage.setItem('user', JSON.stringify(user));
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as AxiosError<{ message?: string }>;
       setAuthState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error.response?.data?.message || 'Login failed',
+        error: err.response?.data?.message || 'Login failed',
       }));
       return false;
     }
@@ -106,11 +107,12 @@ export const useAuth = () => {
       localStorage.setItem('refreshToken', refresh_token);
       localStorage.setItem('user', JSON.stringify(user));
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as AxiosError<{ message?: string }>;
       setAuthState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error.response?.data?.message || 'Registration failed',
+        error: err.response?.data?.message || 'Registration failed',
       }));
       return false;
     }
@@ -141,7 +143,7 @@ export const useAuth = () => {
         sellersLoading: false,
         sellersError: null,
       }));
-    } catch (error) {
+    } catch {
       setAuthState((prev) => ({
         ...prev,
         isLoading: false,
@@ -202,7 +204,8 @@ export const useAuth = () => {
         sellersError: null,
       }));
       return sellersData.filter(seller => seller.is_active);
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const err = error as AxiosError<{ message?: string }>;
       console.error('[getAllSellers] Error fetching sellers:', {
         message: err.message,
         response: err.response?.data,

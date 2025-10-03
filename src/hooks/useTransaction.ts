@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState } from 'react';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useAuth } from './useAuth';
 import { API_BASE_URL } from '../contants/api';
 
@@ -61,7 +62,8 @@ export const useTransaction = () => {
       } else {
         setError('No redirect URL received from server');
       }
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const err = error as AxiosError<{ message?: string }>;
       setError(err.response?.data?.message || 'Failed to create transaction');
     } finally {
       setIsLoading(false);
@@ -75,7 +77,7 @@ export const useTransaction = () => {
 
     try {
       const response = await axios.get<Seller[]>(
-        `${API_BASE_URL}/transactions/sellers`,
+        `${API_BASE_URL}/auth/sellers`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -84,7 +86,8 @@ export const useTransaction = () => {
         }
       );
       setSellers(response.data.filter(seller => seller.is_active));
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const err = error as AxiosError<{ message?: string }>;
       setSellersError(err.response?.data?.message || 'Failed to fetch sellers');
     } finally {
       setSellersLoading(false);
