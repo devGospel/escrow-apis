@@ -1,8 +1,8 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface LoginProps {
   onClose: () => void;
@@ -14,27 +14,68 @@ const Login: React.FC<LoginProps> = ({ onClose, onSwitchToRegister, onLoginSucce
   const { login, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const validateField = (name: string, value: string) => {
+    let err = '';
+    if (name === 'email') {
+      if (!/\S+@\S+\.\S+/.test(value)) err = 'Invalid email format';
+    }
+    if (name === 'password') {
+      if (value.length < 8) err = 'Password must be at least 8 characters';
+    }
+    return err;
+  };
+
+  const handleChange = (name: string, value: string) => {
+    if (name === 'email') setEmail(value);
+    if (name === 'password') setPassword(value);
+
+    const err = validateField(name, value);
+    setClientErrors(prev => ({ ...prev, [name]: err }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFeedback(null);
+    setClientErrors({});
+
+    const emailErr = validateField('email', email);
+    const passwordErr = validateField('password', password);
+
+    if (emailErr || passwordErr) {
+      setClientErrors({ email: emailErr, password: passwordErr });
+      return;
+    }
+
     const success = await login(email, password);
     if (success) {
       setFeedback({ type: 'success', message: 'Login successful!' });
-      onLoginSuccess(); // Trigger refresh in parent component
+      onLoginSuccess();
       setTimeout(() => {
         onClose();
         setFeedback(null);
       }, 1500);
     } else {
-      setFeedback({ type: 'error', message: error || 'Login failed' });
+      if (typeof error === 'object' && error !== null && 'errors' in error) {
+        setClientErrors(error as Record<string, string>);
+        setFeedback({ type: 'error', message: 'Please correct the errors above.' });
+      } else {
+        setFeedback({ type: 'error', message: (typeof error === 'string' ? error : 'Login failed. Please check your credentials.') });
+      }
     }
   };
 
   useEffect(() => {
     if (error) {
-      setFeedback({ type: 'error', message: error });
+      if (typeof error === 'object' && error !== null && 'errors' in error) {
+        setClientErrors(error as Record<string, string>);
+        setFeedback({ type: 'error', message: 'Please correct the errors above.' });
+      } else {
+        setFeedback({ type: 'error', message: (typeof error === 'string' ? error : 'Login failed.') });
+      }
     }
   }, [error]);
 
@@ -57,25 +98,38 @@ const Login: React.FC<LoginProps> = ({ onClose, onSwitchToRegister, onLoginSucce
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => handleChange('email', e.target.value)}
               className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-gray-100"
               required
             />
+            {clientErrors.email && <p className="text-red-500 text-xs mt-1">{clientErrors.email}</p>}
+            <p className="text-gray-500 text-xs mt-1">Enter a valid email (e.g., user@example.com)</p>
           </div>
           <div className="mb-4">
             <label className="block text-gray-700 dark:text-gray-300 text-sm mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-gray-100"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => handleChange('password', e.target.value)}
+                className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-gray-100"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-2 text-gray-500"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            {clientErrors.password && <p className="text-red-500 text-xs mt-1">{clientErrors.password}</p>}
+            <p className="text-gray-500 text-xs mt-1">Enter your password</p>
           </div>
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-indigo-600 dark:bg-indigo-500 text-white dark:text-gray-100 py-2 px-4 rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-600 transition duration-200 text-sm sm:text-base disabled:opacity-50 flex items-center justify-center"
+            className="w-full bg-indigo-600 dark:bg-indigo-500 text-white dark:text-gray-100 py-2 px-4 rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-600 transition duration-200 text-sm sm:text-base flex items-center justify-center"
           >
             {isLoading ? (
               <>
@@ -106,12 +160,15 @@ const Login: React.FC<LoginProps> = ({ onClose, onSwitchToRegister, onLoginSucce
             )}
           </button>
         </form>
-        <button
-          onClick={onSwitchToRegister}
-          className="mt-4 text-indigo-600 dark:text-indigo-400 hover:underline text-sm"
-        >
-          Don&apos;t have an account? Register
-        </button>
+        <p className="mt-4 text-gray-600 dark:text-gray-400 text-sm">
+          Don&apos;t have an account?{' '}
+          <button
+            onClick={onSwitchToRegister}
+            className="text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Register
+          </button>
+        </p>
         <button
           onClick={onClose}
           className="mt-2 text-gray-600 dark:text-gray-400 hover:underline text-sm"

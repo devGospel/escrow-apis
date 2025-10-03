@@ -25,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onLogout, onLoginSucce
           <div className="bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-300 w-10 h-10 flex items-center justify-center rounded-full text-2xl font-bold">
             J
           </div>
-          <h1 className="text-2xl font-semibold">JetStores</h1>
+          <h1 className="text-2xl font-semibold">JetTStores</h1>
         </div>
 
         {/* Hamburger Menu for Mobile */}

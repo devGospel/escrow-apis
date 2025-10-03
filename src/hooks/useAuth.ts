@@ -29,7 +29,7 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  error: string | null;
+  error: string | Record<string, string> | null;
   sellers: Seller[];
   sellersLoading: boolean;
   sellersError: string | null;
@@ -72,24 +72,25 @@ export const useAuth = () => {
       localStorage.setItem('user', JSON.stringify(user));
       return true;
     } catch (error: unknown) {
-      const err = error as AxiosError<{ message?: string }>;
+      const err = error as AxiosError<{ message?: string; errors?: Record<string, string> }>;
+      const errorMessage = err.response?.data?.message || err.response?.data?.errors || 'Login failed';
       setAuthState((prev) => ({
         ...prev,
         isLoading: false,
-        error: err.response?.data?.message || 'Login failed',
+        error: errorMessage,
       }));
       return false;
     }
   };
 
-  const register = async (email: string, password: string, phone: string) => {
+  const register = async (email: string, password: string, phone: string, role: 'buyer' | 'seller' | 'admin') => {
     setAuthState((prev) => ({ ...prev, isLoading: true, error: null }));
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/register`, {
         email,
         password,
         phone,
-        role: 'buyer',
+        role,
       }, { withCredentials: true });
       const { access_token, refresh_token, user } = response.data;
       setAuthState({
@@ -108,11 +109,12 @@ export const useAuth = () => {
       localStorage.setItem('user', JSON.stringify(user));
       return true;
     } catch (error: unknown) {
-      const err = error as AxiosError<{ message?: string }>;
+      const err = error as AxiosError<{ message?: string; errors?: Record<string, string> }>;
+      const errorMessage = err.response?.data?.errors || err.response?.data?.message || 'Registration failed';
       setAuthState((prev) => ({
         ...prev,
         isLoading: false,
-        error: err.response?.data?.message || 'Registration failed',
+        error: errorMessage,
       }));
       return false;
     }
